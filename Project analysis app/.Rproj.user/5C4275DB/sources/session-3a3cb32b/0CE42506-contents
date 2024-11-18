@@ -1,0 +1,7 @@
+
+observeEvent(input$thisButton, {
+  
+  print("ok")
+  output$thisOutput <- renderText(input$thisInput)
+  
+})

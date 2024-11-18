@@ -1,0 +1,12 @@
+name: PLB105-data-analysis-app
+title: PLB105-data-analysis-app
+username: mtwatson
+account: mtwatson
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13317167
+bundleId: 9370730
+url: https://mtwatson.shinyapps.io/PLB105-data-analysis-app/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

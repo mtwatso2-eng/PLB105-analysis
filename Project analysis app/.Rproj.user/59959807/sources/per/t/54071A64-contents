@@ -1,0 +1,17 @@
+source("global.R")
+
+ui <- navbarPage(id = "tabs", collapsible = TRUE, title = "Title",
+  modulePanel("Module One", value = "moduleOne"),
+  modulePanel("Module Two", value = "moduleTwo"), 
+  tags$head(tags$link(rel="shortcut icon", href="https://thumbs.dreamstime.com/b/sweet-potato-white-background-sweet-potato-batata-white-background-isolated-103677860.jpg"))
+)
+  
+server <- function(input, output, session) {
+  
+  sapply(list.files(path = "modules"), function(module){
+    get(module)$server(input, output, session)
+  })
+  
+}
+
+shinyApp(ui = ui, server = server)

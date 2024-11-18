@@ -1,0 +1,75 @@
+require(tidyverse); require(magrittr); require(plotly)
+
+sweetpotatoDensitygpercm3 <- 1.05
+
+rootParameters <- "/Users/mtwatso2/Library/CloudStorage/GoogleDrive-mtwatso2@ncsu.edu/Shared drives/UAV_sweetpotato/Trial data/2023 P block beds/4 19 23 roots/parameters.csv" %>%
+  read_csv()
+
+weeklyYieldChange <- function(rootParameters, nDays, lengthChange = 0.02, widthChange = 0.2){
+  
+  df <- rootParameters %>%
+    mutate(
+      `width (px)` = `width (px)` + nDays * widthChange * `pixels/cm`,
+      `length (px)` = `length (px)` + nDays * lengthChange * `pixels/cm`
+    ) %>%
+    mutate(
+      `volume (px^3)` = (pi * `width (px)` * `length (px)` * blockiness * `width (px)` / 4) * (blockiness ** (2 / 3)),
+      `volume (px^3)` = `volume (px^3)` / (`pixels/cm` ^ 3),
+      thisRootMass = `volume (px^3)` * sweetpotatoDensitygpercm3,
+      thisRootWeight = round((0.035274 * thisRootMass), 2),
+      thisNo1Weight = thisRootWeight * 
+        (1.75 <= (`width (px)` / (`pixels/cm` * 2.54)) & (`width (px)` / (`pixels/cm` * 2.54)) <= 3.5) *
+        (thisRootWeight < 20) * (3 <= (`length (px)` / (`pixels/cm` * 2.54)) & (`length (px)` / (`pixels/cm` * 2.54)) <= 9)
+    ) %>%
+    group_by(plot) %>%
+    summarise(
+      percentNo1 = sum(thisNo1Weight > 0, na.rm = T) / n(),
+      no1Weight = sum(thisNo1Weight, na.rm = T)
+    )
+  
+  return(df)
+  
+}
+
+rootParameters %>%
+  mutate(
+    `width (px)` = `width (px)`,
+    `length (px)` = `length (px)`
+  ) %>%
+  mutate(
+    `volume (px^3)` = (pi * `width (px)` * `length (px)` * blockiness * `width (px)` / 4) * (blockiness ** (2 / 3)),
+    `volume (px^3)` = `volume (px^3)` / (`pixels/cm` ^ 3),
+    thisRootMass = `volume (px^3)` * sweetpotatoDensitygpercm3,
+    thisRootWeight = round((0.035274 * thisRootMass), 2),
+    thisNo1Weight = thisRootWeight * 
+      (1.75 <= (`width (px)` / (`pixels/cm` * 2.54)) & (`width (px)` / (`pixels/cm` * 2.54)) <= 3.5) *
+      (thisRootWeight < 20) * (3 <= (`length (px)` / (`pixels/cm` * 2.54)) & (`length (px)` / (`pixels/cm` * 2.54)) <= 9)
+  ) %>%
+  plot_ly(y = ~thisRootWeight, x = ~plot, color = ~plot, type = "box",         boxpoints = "all",
+          jitter = 0.3)
+  
+
+rootNo1YieldEstmates <- rootParameters %>%
+  weeklyYieldChange(., 0) %>%
+  select(plot)
+
+for (i in -35:35){
+  rootNo1YieldEstmates[[paste("Day", i, "percent no. 1", collapse = "")]] <- weeklyYieldChange(rootParameters, i)$percentNo1
+  rootNo1YieldEstmates[[paste("Day", i, "no1Weight", collapse = "")]] <- weeklyYieldChange(rootParameters, i)$no1Weight
+}
+
+rootNo1YieldEstmates %>%
+  pivot_longer(contains("Day") & contains("percent no. 1")) %>%
+  mutate(name = parse_number(name)) %>%
+  rename(`Days from now` = name, `Percent No.1's` = value) %>%
+  plot_ly(x = ~`Days from now`, y = ~`Percent No.1's`, color = ~plot, type = 'scatter', mode = 'lines') %>%
+  layout(title = "") %>%
+  print()
+
+rootNo1YieldEstmates %>%
+  pivot_longer(contains("Day") & contains("no1Weight")) %>%
+  mutate(name = parse_number(name)) %>%
+  rename(`Days from now` = name, `No.1 yield` = value) %>%
+  plot_ly(x = ~`Days from now`, y = ~`No.1 yield`, color = ~plot, type = 'scatter', mode = 'lines') %>%
+  layout(title = "") %>%
+  print()

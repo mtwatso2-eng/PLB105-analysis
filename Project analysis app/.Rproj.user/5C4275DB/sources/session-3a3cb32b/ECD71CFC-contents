@@ -1,0 +1,10 @@
+moduleOne <- list(
+  
+  "ui" = fluidPage(
+    "Module One"
+  ),
+  
+  "server" = function(input, output, session){
+  }
+  
+)
